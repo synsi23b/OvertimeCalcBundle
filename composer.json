@@ -21,8 +21,8 @@
     ],
     "extra": {
         "kimai": {
-            "require": "1.21",
-            "name": "Overtime display on the dashboard"
+            "require": "1.26",
+            "name": "OvertimeCalcBundle"
         }
     },
     "autoload": {

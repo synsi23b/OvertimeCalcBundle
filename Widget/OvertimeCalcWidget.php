@@ -19,6 +19,7 @@ use App\Widget\Type\SimpleWidget;
 use App\Widget\Type\UserWidget;
 
 use KimaiPlugin\OvertimeCalcBundle\Repository\WerkSheetRepository;
+use phpDocumentor\Reflection\Types\Integer;
 use phpDocumentor\Reflection\Types\Null_;
 
 class OvertimeCalcWidget extends SimpleWidget implements UserWidget
@@ -86,43 +87,74 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
         return $vacavail;
     }
 
+    public function getUserWorktimeWeek($user)
+    {
+        $res = 0;
+        $res += $user->getPreferenceValue("daily_working_time_monday", 0);
+        $res += $user->getPreferenceValue("daily_working_time_tuesday", 0);
+        $res += $user->getPreferenceValue("daily_working_time_wednesday", 0);
+        $res += $user->getPreferenceValue("daily_working_time_thursday", 0);
+        $res += $user->getPreferenceValue("daily_working_time_friday", 0);
+        $res += $user->getPreferenceValue("daily_working_time_saturday", 0);
+        $res += $user->getPreferenceValue("daily_working_time_sunday", 0);
+        return $res;
+    }
+
     public function getData(array $options = [])
     {
         $options = $this->getOptions($options);
         /** @var User $user */
         $user = $options['user'];
         
-        $worked = $this->werksheetrep->getSecondsWorked($user);
-        $vacation = $this->werksheetrep->getSecondsVacationTaken($user);
-        $workingdays = $user->getRegisteredAt()->diff(date_create('now'))->days;
-        $workingweeks = round($workingdays / 7, 1);
-        $calcavail = $this->calculateVacationAvailable($workingweeks, $worked, $vacation);
-        $vacavail = $calcavail[0];
+        $worked_alltime_s = $this->werksheetrep->getSecondsWorked($user);
+        $worked_alltime_h = round($worked_alltime_s / 3600, 2);
+        $weekly_expect_h = round($this->getUserWorktimeWeek($user) / 3600, 2);
+        
+        $working_days = $user->getRegisteredAt()->diff(date_create('now'))->days;
+        $working_years = round($working_days / 365.25, 5);
+        
+        $daily_expect_h = round($weekly_expect_h / 7, 5);
 
-        $vacation_capped = $this->capVacationByMonth($workingdays, $vacavail);
-        $vachours = floor($vacation_capped / 3600);
-        $vacminutes = round(($vacation_capped - $vachours * 3600) / 60);
+        $yearly_expect_h = round($daily_expect_h * 365.25, 2);
+        $expected_time_h = round($yearly_expect_h * $working_years, 2);
+        $time_difference_h = round($worked_alltime_h - $expected_time_h, 2);
 
-        $vac_cap_exp = null;
-        if($vacation_capped != $vacavail)
+        if($time_difference_h > 0)
         {
-            $vac_cap_exp = sprintf("Since your working time is less than 6 Month, the available vacation got capped at %u month", floor($workingdays / 30));
+            $time_diff_hours = floor($time_difference_h);
+            $time_diff_minutes = floor(($time_difference_h - $time_diff_hours) * 60);
+        } else {
+            $time_difference_h = -$time_difference_h;
+            $time_diff_hours = floor($time_difference_h);
+            $time_diff_minutes = floor(($time_difference_h - $time_diff_hours) * 60);
+            $time_diff_hours = -$time_diff_hours;
         }
 
+        if($time_diff_minutes < 10)
+        {
+            $time_diff_minutes = "0" . strval($time_diff_minutes);
+        }
+        
+
+        $detailedcalc = "Bla Bla Bla";
         return [
-            'worked' => round($worked / 3600, 2),
-            'vacation' => round($vacation / 3600, 2),
-            'days_working' => $workingdays,
-            'weeks_working' => $workingweeks,
-            'vacation_hours' => $vachours,
-            'vacation_minutes' => $vacminutes,
-            'detailedcalc' => $calcavail,
-            'cap_explenation' => $vac_cap_exp
+            'time_diff_hours' => $time_diff_hours,
+            'time_diff_minutes' => $time_diff_minutes,
+            'worked_alltime_s' => $worked_alltime_s,
+            'worked_alltime_h' => $worked_alltime_h,
+            'weekly_expect_h' => $weekly_expect_h,
+            'working_days' => $working_days,
+            'working_years' => $working_years,
+            'daily_expect_h' => $daily_expect_h,
+            'yearly_expect_h' => $yearly_expect_h,
+            'expected_time_h' => $expected_time_h,
+            'time_difference_h' => $time_difference_h,
+            'detailedcalc' => $detailedcalc
         ];
     }
 
     public function getTemplateName(): string
     {
-        return '@OvertimeCalc/studentvacwidget.html.twig';
+        return '@OvertimeCalc/overtimewidget.html.twig';
     }
 }

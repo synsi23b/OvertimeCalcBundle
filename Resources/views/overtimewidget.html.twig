@@ -1,0 +1,35 @@
+<div class="box box-danger">
+    <div class="box-header with-border">
+        <h3 class="box-title">Arbeitszeit Berechnung</h3>
+        <div class="box-tools pull-right">
+            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+            </button>
+        </div>
+    </div>
+    <div class="box-body no-padding">
+        <table class="table table-hover dataTable" role="grid">
+            <tbody>
+                <tr>
+                    <td><b>Arbeitszeit-Differenz (Aktuell - Erwartung):</b></td>
+                    <td><b>{{ data.time_diff_hours }} : {{ data.time_diff_minutes }} h</b></td>
+                </tr>
+                <tr>
+                    <td>Arbeitszeit Total Sekunden -> Stunden</td>
+                    <td>{{ data.worked_alltime_s }} s -> {{ data.worked_alltime_h }} h</td>
+                </tr>
+                <tr>
+                    <td>Arbeitszeit Erwartung pro Woche -> Tag -> Jahr (365.25 Tage)</td>
+                    <td>{{ data.weekly_expect_h }} h -> {{ data.daily_expect_h }} h -> {{ data.yearly_expect_h }} h</td>
+                </tr>
+                <tr>
+                    <td>Arbeitszeit seit Beginn -> Tage -> Jahre (365.25 Tage)</td>
+                    <td>{{ data.working_days }} d -> {{ data.working_years }} a</td>
+                </tr>
+                <tr>
+                    <td>Formel: Arbeitszeit - Anstellungszeit_jahre * Erwartung/Jahr</td>
+                    <td>{{ data.worked_alltime_h }} h - {{ data.working_years }} a * {{ data.yearly_expect_h }} h</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

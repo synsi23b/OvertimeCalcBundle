@@ -44,7 +44,7 @@ class WerkSheetRepository extends TimesheetRepository
         $qb = $this->getQueryBuilderForQuery($qr);
         $qb->select('COALESCE(SUM(t.duration), 0)');
         # TODO dont hardcode activity ID
-        $qb->andWhere("t.activity <> 11");
+        # $qb->andWhere("t.activity <> 11");
         $qb->getQuery()->getSingleScalarResult();
         /** @phpstan-ignore-next-line  */
         $result = $qb->getQuery()->getSingleScalarResult();

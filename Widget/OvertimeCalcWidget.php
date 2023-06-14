@@ -1,26 +1,14 @@
 <?php
 
-/*
- * This file is part of the DemoBundle for Kimai 2.
- * All rights reserved by Kevin Papst (www.kevinpapst.de).
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace KimaiPlugin\OvertimeCalcBundle\Widget;
 
 use App\Entity\User;
-use App\Repository\Query\UserQuery;
-use App\Repository\Query\TimesheetQuery;
 use App\Repository\UserRepository;
-use App\Repository\TimesheetRepository;
 use App\Widget\Type\SimpleWidget;
 use App\Widget\Type\UserWidget;
 
 use KimaiPlugin\OvertimeCalcBundle\Repository\WerkSheetRepository;
-use phpDocumentor\Reflection\Types\Integer;
-use phpDocumentor\Reflection\Types\Null_;
+
 
 class OvertimeCalcWidget extends SimpleWidget implements UserWidget
 {
@@ -33,7 +21,6 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
      */
     private $werksheetrep;
 
-    //public function __construct(UserRepository $userrepository, TimesheetRepository $sheetrep, WerkSheetRepository $werkrep)
     public function __construct(WerkSheetRepository $werkrep, UserRepository $userrepository)
     {
         $this->userrep = $userrepository;
@@ -64,29 +51,6 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
         return $options;
     }
 
-    public function calculateVacationAvailable($workingweeks, $worked, $vacation)
-    {
-        $employee_vac_seconds = 192 * 3600; // 691200;
-        //$student_avg_week_s = $worked / $workingweeks;
-        $employee_work_week_s = 40 * 3600; //144000;
-        
-        $vacperyear = $employee_vac_seconds * ($worked / $workingweeks) / $employee_work_week_s;
-        $formustring = "(employee_vacation_seconds x student_avg_week_s / employee_work_week_s) - vacation_taken_s = vacation_available_seconds";
-        $calcstring = sprintf("%u x (%u / %.1f) / %u = %u seconds per year -> %.2f hours per year", $employee_vac_seconds, $worked, $workingweeks, $employee_work_week_s, $vacperyear, $vacperyear / 3600);
-        $vacavail = $vacperyear - $vacation;
-        $calcstring2 = sprintf("seconds_per_year - vacation_already_taken = vacation_available -> %u - %u = %u", $vacperyear, $vacation, $vacavail);
-        return [$vacavail, $formustring, $calcstring, $calcstring2];
-    }
-
-    public function capVacationByMonth($workingdays, $vacavail)
-    {
-        if($workingdays < 180)
-        {
-            $vacavail = ($vacavail / 12) * floor($workingdays / 30);
-        }
-        return $vacavail;
-    }
-
     public function getUserWorktimeWeek($user)
     {
         $res = 0;
@@ -103,22 +67,26 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
     public function getData(array $options = [])
     {
         $options = $this->getOptions($options);
-        /** @var User $user */
         $user = $options['user'];
         
+        // get worked time and expected worked time from settings
         $worked_alltime_s = $this->werksheetrep->getSecondsWorked($user);
         $worked_alltime_h = round($worked_alltime_s / 3600, 2);
         $weekly_expect_h = round($this->getUserWorktimeWeek($user) / 3600, 2);
+        $daily_expect_h = round($weekly_expect_h / 7, 5);
         
+        // check the days worked to base the calculation on
         $working_days = $user->getRegisteredAt()->diff(date_create('now'))->days;
         $working_years = round($working_days / 365.25, 5);
-        
-        $daily_expect_h = round($weekly_expect_h / 7, 5);
 
+        // finally, based on the time worked, calculate the current expectation vs actual
+        // TODO this breaks if the user switches between half and full time throughout employment history
+        // simple (manual) fix: create a new worker profile and create an entry on the first day containing the previous over/undertime
         $yearly_expect_h = round($daily_expect_h * 365.25, 2);
         $expected_time_h = round($yearly_expect_h * $working_years, 2);
         $time_difference_h = round($worked_alltime_h - $expected_time_h, 2);
 
+        // split float hours to hours + minutes and keep sign
         if($time_difference_h > 0)
         {
             $time_diff_hours = floor($time_difference_h);
@@ -130,13 +98,13 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
             $time_diff_hours = -$time_diff_hours;
         }
 
+        // Display minutes with leading 0 if smaller than 10
         if($time_diff_minutes < 10)
         {
             $time_diff_minutes = "0" . strval($time_diff_minutes);
         }
         
-
-        $detailedcalc = "Bla Bla Bla";
+        // map values to twig-widget for display to the user
         return [
             'time_diff_hours' => $time_diff_hours,
             'time_diff_minutes' => $time_diff_minutes,
@@ -148,8 +116,7 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
             'daily_expect_h' => $daily_expect_h,
             'yearly_expect_h' => $yearly_expect_h,
             'expected_time_h' => $expected_time_h,
-            'time_difference_h' => $time_difference_h,
-            'detailedcalc' => $detailedcalc
+            'time_difference_h' => $time_difference_h
         ];
     }
 

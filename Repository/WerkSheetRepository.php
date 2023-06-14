@@ -36,15 +36,19 @@ class WerkSheetRepository extends TimesheetRepository
         return 25;
     }
 
-    public function getSecondsWorked(User $user): float
+    public function getSecondsWorked(User $user, int $minus_days=0): float
     {
+        $until = date_modify(date_create('now'), strval($minus_days) . " days");
+        
         $qr = new TimesheetQuery();
         $qr->setUser($user)
            ->setState(TimesheetQuery::STATE_STOPPED);
         $qb = $this->getQueryBuilderForQuery($qr);
         $qb->select('COALESCE(SUM(t.duration), 0)');
-        # TODO dont hardcode activity ID
-        # $qb->andWhere("t.activity <> 11");
+        
+        $dfs = date_format($until, "Y-m-d");
+        $qb->andWhere("t.date <= '" . $dfs . "'");
+        
         $qb->getQuery()->getSingleScalarResult();
         /** @phpstan-ignore-next-line  */
         $result = $qb->getQuery()->getSingleScalarResult();

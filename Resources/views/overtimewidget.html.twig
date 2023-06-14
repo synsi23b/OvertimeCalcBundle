@@ -1,18 +1,15 @@
-<div class="box box-danger">
+<div class="box box-danger collapsed-box">
     <div class="box-header with-border">
-        <h3 class="box-title">Arbeitszeit Berechnung</h3>
+        <h3 class="box-title">Arbeitszeit-Differenz (Aktuell - Erwartung): <b>{{ data.time_diff_hours }} : {{ data.time_diff_minutes }}</b></h3>
         <div class="box-tools pull-right">
-            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
+            <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
             </button>
         </div>
     </div>
-    <div class="box-body no-padding">
+    <div class="box-body no-padding" style="display: none;">
+        <p style="padding-left: 10px;padding-right: 10px;">Hinweis: Die Berechnung sammelt ueber den Durschnitt der Woche, nicht nur Werktags. Dies bedeutet, um am Montag auf 0 zu kommen, braucht man Freitags einen Ueberschuss. Weiterhin basiert die Berechnung auf der Dauer "erster Arbeitstag" - "heutiger Tag". Die Zeiten des heutigen Tages sind nicht enthalten.</p>
         <table class="table table-hover dataTable" role="grid">
             <tbody>
-                <tr>
-                    <td><b>Arbeitszeit-Differenz (Aktuell - Erwartung):</b></td>
-                    <td><b>{{ data.time_diff_hours }} : {{ data.time_diff_minutes }} h</b></td>
-                </tr>
                 <tr>
                     <td>Arbeitszeit Total Sekunden -> Stunden</td>
                     <td>{{ data.worked_alltime_s }} s -> {{ data.worked_alltime_h }} h</td>
@@ -22,7 +19,7 @@
                     <td>{{ data.weekly_expect_h }} h -> {{ data.daily_expect_h }} h -> {{ data.yearly_expect_h }} h</td>
                 </tr>
                 <tr>
-                    <td>Arbeitszeit seit Beginn -> Tage -> Jahre (365.25 Tage)</td>
+                    <td>Arbeitszeit seit Beginn ({{ data.first_working_day }}) -> Tage -> Jahre (365.25 Tage)</td>
                     <td>{{ data.working_days }} d -> {{ data.working_years }} a</td>
                 </tr>
                 <tr>

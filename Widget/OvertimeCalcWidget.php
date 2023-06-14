@@ -70,13 +70,14 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
         $user = $options['user'];
         
         // get worked time and expected worked time from settings
-        $worked_alltime_s = $this->werksheetrep->getSecondsWorked($user);
+        $worked_alltime_s = $this->werksheetrep->getSecondsWorked($user, -1);
         $worked_alltime_h = round($worked_alltime_s / 3600, 2);
         $weekly_expect_h = round($this->getUserWorktimeWeek($user) / 3600, 2);
         $daily_expect_h = round($weekly_expect_h / 7, 5);
         
         // check the days worked to base the calculation on
-        $working_days = $user->getRegisteredAt()->diff(date_create('now'))->days;
+        $first_day = $user->getRegisteredAt();
+        $working_days = $first_day->diff(date_create('now'))->days;
         $working_years = round($working_days / 365.25, 5);
 
         // finally, based on the time worked, calculate the current expectation vs actual
@@ -111,6 +112,7 @@ class OvertimeCalcWidget extends SimpleWidget implements UserWidget
             'worked_alltime_s' => $worked_alltime_s,
             'worked_alltime_h' => $worked_alltime_h,
             'weekly_expect_h' => $weekly_expect_h,
+            'first_working_day' => date_format($first_day, "Y-m-d"),
             'working_days' => $working_days,
             'working_years' => $working_years,
             'daily_expect_h' => $daily_expect_h,
